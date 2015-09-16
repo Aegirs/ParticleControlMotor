@@ -1,0 +1,79 @@
+/*
+args:
+    instruction : string with information: "direction1,timeRun1,speedRun1,...directionN,timeRunN,speedRunN"
+    direction : 0 dans un sens 1 ou plus dans l'autre
+    timeRun : time in ms
+    speedRun : value bteween 0 255
+strInter is a function to init timeMotor and speedMotor. 
+    -timeMotor is a table and each cases is the time of duration of motor running.
+    -speedMotor is a table and each cases is a speed in Hertz.
+*/
+
+void readInstruction(String instructions,int* directionMotor,int* myMotorArray) {
+
+	int timeMotor[NBMOTOR];
+    int speedMotor[NBMOTOR];
+    char *infoMotor = strtok(strdup(instructions.c_str()), ",");
+    
+    // boucle sur les moteurs
+    for(int i = 0; i < NBMOTOR; i++) {
+        // boucles sur les 3 arguments
+        for(int j = 0 ;  j < 3 ;j ++) {
+            if ( j == 0 ) {
+                int direction = atoi(infoMotor);
+                if ( direction > 0 ) {
+                    digitalWrite(directionMotor[i], HIGH);
+                }
+                else {
+                    digitalWrite(directionMotor[i], LOW);
+                }     
+            }
+            else if ( j == 1 ) {
+                timeMotor[i] = atoi(infoMotor);
+            }
+            else {
+                speedMotor[i] = atoi(infoMotor);
+            }       
+            infoMotor = strtok(NULL, ",");
+        }
+        Serial.println("motor " + String(i) + " : \n\t-rotation during: " + timeMotor[i] + " ms\n\tDirection: " + directionMotor[i] +  "\n\t-Speed : "  + speedMotor[i] + " /255");
+    }
+    
+    motorControl(timeMotor,speedMotor); 
+
+    
+    return 1;
+}
+
+void motorControl(int timeMotor[NBMOTOR],int speedMotor[NBMOTOR]) {
+    
+    int end = 0; 
+    int stateMotor[NBMOTOR] = {1};
+
+    unsigned long currentMillis = 0; 
+    unsigned long startMillis = millis(); 
+
+    while (end != NBMOTOR) {
+        
+        currentMillis = millis();
+        end = 0;
+
+        // run Motor with frequency
+        for(int i=0; i < NBMOTOR;i++ ){
+            if ( (currentMillis - startMillis) < timeMotor[i] ) {
+                analogWrite(myMotorArray[i],speedMotor[i]);
+                // a tester
+                delay(speedMotor[i]/10);
+            }
+            else {
+                end++;
+                digitalWrite(myMotorArray[i], LOW);
+                stateMotor[i] = 0;
+            }            
+        }        
+    }
+
+    Serial.println();
+    Serial.println("Done");
+    Serial.println();
+}
